@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SE Registration Capacity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div id="gate" hidden></div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <h1><small id="season">SE Baseball · 2027</small>Registration</h1>
+    <div class="navr">
+      <div class="tools" id="tools"></div>
+      <div class="who-am-i" id="whoami"></div>
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-tab="overview" aria-selected="true">Seats</button>
+        <button role="tab" data-tab="players" aria-selected="false" data-admin hidden>Players</button>
+        <button role="tab" data-tab="regs" aria-selected="false" data-admin hidden>Registrations<span class="badge" id="regBadge" hidden></span></button>
+        <button role="tab" data-tab="divisions" aria-selected="false" data-admin hidden>Divisions</button>
+        <button role="tab" data-tab="log" aria-selected="false" data-admin hidden>Activity</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SEATS -->
+  <section id="view-overview" class="overview">
+    <div class="headline" id="headline" aria-live="polite"><div class="meta">Loading…</div></div>
+    <div class="divs" id="divs"></div>
+    <div class="row">
+      <div class="totals" id="totals"></div><span class="spacer"></span>
+      <div class="legend"><span><i class="dot Registered"></i>Registered</span><span><i class="dot Expected"></i>Returner expected</span><span><i class="dot Need"></i>Returner — need to contact</span><span><i class="dot"></i>Open</span></div>
+      <a class="btn" href="/api/capacity.csv">Download (CSV)</a>
+    </div>
+  </section>
+
+  <!-- PLAYERS (admin) -->
+  <section id="view-players" hidden>
+    <div class="panel">
+      <div class="hd"><h2>Players</h2>
+        <div class="row">
+          <input type="search" id="plSearch" placeholder="Search" style="width:180px" aria-label="Search players">
+          <select id="plDiv" style="width:auto" aria-label="Division"></select>
+          <select id="plStatus" style="width:auto" aria-label="Status"></select>
+          <select id="plKind" style="width:auto" aria-label="Returner or new"><option value="">Returners &amp; new</option><option value="1">Returners</option><option value="0">New</option></select>
+          <label class="row" style="gap:4px;font-weight:500;white-space:nowrap"><input type="checkbox" id="plMismatch"> Age doesn't fit</label>
+          <button class="btn" id="addPlayer">Add player</button>
+          <a class="btn" href="/api/admin/players.csv">CSV</a>
+        </div>
+      </div>
+      <div class="bd">
+        <p class="note">Edits save as you leave each field. Tick kids and use <b>Move to</b> to put them in another division. A move made here is <b>pinned</b>: a SportsEngine registration won't move them back to the program the family picked. <b>Lock</b> pins a status the same way.</p>
+        <div class="scroll"><table class="kt" id="plTable"></table></div>
+        <div class="movebar" id="moveBar" hidden>
+          <b id="moveCount"></b>
+          <label for="moveTo">Move to</label><select id="moveTo"></select>
+          <input type="text" id="moveReason" placeholder="Reason (optional)" style="width:200px" aria-label="Reason">
+          <button class="btn" id="moveGo">Move</button>
+          <button class="btn" id="moveClear">Clear</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGISTRATIONS (admin) -->
+  <section id="view-regs" class="grid2" hidden>
+    <div class="panel wide">
+      <div class="hd"><h2>Registration inbox</h2>
+        <div class="row">
+          <select id="regFilter" style="width:auto" aria-label="Filter">
+            <option value="open">Needs attention</option><option value="placed">New players placed</option><option value="returner">Returners registered</option>
+            <option value="withdrawn">Withdrawn</option><option value="wrong_year">Other years</option><option value="relay">Draft board relay failed</option>
+            <option value="ignored">Ignored</option><option value="all">All</option>
+          </select>
+          <button class="btn" id="regReprocess">Re-run placement on open items</button>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="row" id="regCounts"></div>
+        <div class="scroll"><table class="kt" id="regTable"></table></div>
+      </div>
+    </div>
+    <div class="panel"><div class="hd"><h2>SportsEngine webhook</h2></div><div class="bd" id="whInfo"></div></div>
+    <div class="panel"><div class="hd"><h2>Import registration report</h2></div><div class="bd">
+      <p class="note">Until the webhook is live, export the registration report from SportsEngine HQ as CSV and drop it here. Needs <b>First Name</b>, <b>Last Name</b> and the <b>program / division</b> column; <b>Date of Birth</b> and <b>Season</b> help. Each row is placed the same way a webhook is.</p>
+      <input type="file" id="regFile" accept=".csv,text/csv">
+      <textarea id="regCsv" rows="4" placeholder="…or paste CSV here"></textarea>
+      <div class="row"><button class="btn primary" id="regImport">Import</button></div>
+    </div></div>
+    <div class="panel"><div class="hd"><h2>Record one registration</h2></div><div class="bd">
+      <p class="note">For a paper form, or to test placement.</p>
+      <div class="row"><input type="text" id="mFirst" placeholder="First name" style="flex:1"><input type="text" id="mLast" placeholder="Last name" style="flex:1"></div>
+      <div class="row"><input type="date" id="mDob" style="flex:1" aria-label="Birthdate"><select id="mDiv" style="flex:1" aria-label="Division"></select></div>
+      <div class="row"><button class="btn primary" id="mSave">Record</button></div>
+    </div></div>
+  </section>
+
+  <!-- DIVISIONS (admin) -->
+  <section id="view-divisions" class="grid2" hidden>
+    <div class="panel wide">
+      <div class="hd"><h2>Divisions</h2><button class="btn primary" id="addDiv">Add division</button></div>
+      <div class="bd">
+        <p class="note"><b>Teams</b> comes from field slots and coaches you have; capacity is teams × roster size. <b>SE program words</b> are matched against the program name a family picks in SportsEngine (comma-separated, e.g. <code>minors, minor league</code>). <b>Ages</b> are league ages, used to age last season's kids up and to flag kids registered in the wrong division. <b>Draft board</b> relays that division's registrations to the Majors draft board.</p>
+        <div class="scroll"><table class="kt" id="divTable"></table></div>
+      </div>
+    </div>
+    <div class="panel"><div class="hd"><h2>Last season's rosters</h2></div><div class="bd">
+      <p class="note">Paste from a spreadsheet or CSV with a header row: <b>Name</b> (or First / Last), <b>Birthdate</b>, <b>Division</b>, <b>Team</b>. Optional <b>Next Division</b> overrides placement. Each kid becomes an <i>Expected</i> returner holding a seat, placed by league age (staying put while still eligible), else in the same division. Kids older than every division are skipped.</p>
+      <textarea id="retBox" rows="7" placeholder="Name,Birthdate,Division,Team&#10;Jamie Smith,2016-05-02,Minors,Cubs"></textarea>
+      <div class="row"><label for="retDefault" style="min-width:0">If no division found</label><select id="retDefault" style="width:auto"></select><button class="btn primary" id="retImport">Add returners</button></div>
+    </div></div>
+    <div class="panel"><div class="hd"><h2>Settings</h2></div><div class="bd">
+      <div class="row"><label for="seasonIn">Season label</label><input type="text" id="seasonIn" style="width:100px"></div>
+      <div class="row"><label for="regYear">Registration year</label><input type="number" id="regYear" style="width:100px"></div>
+      <p class="note">SportsEngine registrations for any other year are filed under “Other years” and don't take a seat.</p>
+      <div class="row"><label for="ageCutoff">League age date</label><input type="text" id="ageCutoff" style="width:100px" placeholder="MM-DD"></div>
+      <div class="row"><label for="warnAt">“Closing soon” at</label><input type="number" id="warnAt" min="0" max="50" style="width:100px"><span class="note">open seats or fewer</span></div>
+    </div></div>
+  </section>
+
+  <!-- ACTIVITY (admin) -->
+  <section id="view-log" hidden>
+    <div class="panel"><div class="hd"><h2>Activity</h2><button class="btn" id="logRefresh">Refresh</button></div>
+      <div class="bd"><div class="scroll"><table class="kt" id="logTable"></table></div></div></div>
+  </section>
+</div>
+
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast" hidden></div>
+<script src="/js/app.js"></script>
+</body>
+</html>

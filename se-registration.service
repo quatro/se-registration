@@ -1,0 +1,19 @@
+# Install as a user unit, matching delta-age.service on this box:
+#   cp se-registration.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now se-registration
+[Unit]
+Description=SE Registration Capacity
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/greg/apps/se-registration
+ExecStart=/home/greg/.nvm/versions/node/v22.22.0/bin/node dist/index.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=HOME=/home/greg
+Environment=PATH=/home/greg/.nvm/versions/node/v22.22.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=default.target
